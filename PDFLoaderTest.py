@@ -2,9 +2,11 @@ import os
 import platform
 
 import openai
-import chromadb
+from langchain import OpenAI
 from dotenv import load_dotenv
-from gpt_index import download_loader
+
+
+#以下いらないかも
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.text_splitter import CharacterTextSplitter
@@ -12,34 +14,34 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
 from langchain.document_loaders import PyPDFLoader
 
+from llama_index import (
+    GPTVectorStoreIndex,#Vector保存
+    SimpleDirectoryReader,
+    StorageContext,
+    load_index_from_storage,
+    download_loader,
+)
+
 #PDFをLLMで読み込むテスト
 
 load_dotenv()
 api_key = os.environ['OPENAI_API_KEY']
-llm = ChatOpenAI(model_name="text-davinci-003",openai_api_key=api_key,temperature=TEMPERATURE)
+openai.api_key=api_key#APIキーを渡す
 
-summarize_prompt_template = """以下の文章を簡潔に要約してください。:
-{text}
-要約:"""
+CJKPDFReader = download_loader("CJKPDFReader")
+loader = CJKPDFReader()#PDF読み込みloader
 
-def _load_documents(self, file_path: str) -> list:
-        CJKPDFReader = download_loader("CJKPDFReader")
-        loader = CJKPDFReader(concat_pages=False)
+documents = loader.load_data("pdftest.pdf")#pdfからドキュメントを読み取る
+index = GPTVectorStoreIndex.from_documents(documents)#indexの作成
+index.storage_context.persist()#indexの保存
 
-        documents = loader.load_data(file=file_path)
-        langchain_documents = [d.to_langchain_format() for d in documents]
-        return langchain_documents
 
-def _summarize(self, langchain_documents: list) -> str:
-        summarize_template = PromptTemplate(
-            template=summarize_prompt_template, input_variables=["text"])
+query_text ="本時のめあてを教えてください。"
 
-        chain = load_summarize_chain(
-            self.llm,
-            chain_type="map_reduce",
-            map_prompt=summarize_template,
-            combine_prompt=summarize_template
-        )
+llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, max_tokens=350))
+storage_context = StorageContext.from_defaults(persist_dir="./storage")
+index = load_index_from_storage(storage_context)
+response = index.query(query_text, llm_predictor=llm_predictor)
 
-        summary = chain.run(langchain_documents)
-        return summary
+print("Q:", query_text)
+print("A:", str(response))

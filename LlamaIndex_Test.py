@@ -19,8 +19,6 @@ if not os.path.exists(persist_dir):
     os.mkdir(persist_dir)
 
 documents = SimpleDirectoryReader("data").load_data()
-for document in documents:
-    print("data内のdocument =",document)
 
 index = GPTVectorStoreIndex.from_documents(documents)
 index.storage_context.persist(persist_dir)
@@ -37,3 +35,5 @@ def print_response(prompt: str, index):
 
 
 print_response("禁止になったカードは何ですか？", index)
+print_response("環境で最強のデッキは何ですか？", index)
+print_response("エスパーミッドレンジは何色のデッキですか？", index)
