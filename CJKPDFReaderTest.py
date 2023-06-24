@@ -5,13 +5,7 @@ from langchain import OpenAI
 from dotenv import load_dotenv
 
 
-from llama_index import (
-    GPTVectorStoreIndex,#Vector保存
-    SimpleDirectoryReader,
-    StorageContext,
-    load_index_from_storage,
-    download_loader,
-)
+from llama_index import download_loader
 
 #PDFをLLMで読み込むテスト
 load_dotenv()
